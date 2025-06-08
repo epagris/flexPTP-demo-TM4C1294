@@ -1,0 +1,45 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "OpenOCD Launch",
+            "cwd": "${workspaceFolder}",
+            "type": "cortex-debug",
+            "request": "launch",
+            "executable": "${command:cmake.launchTargetPath}",
+            "servertype": "openocd",
+            "device": "TM4C1294NCPDT",
+            "runToEntryPoint": "main",
+            //"svdFile": "",          
+            "gdbPath": "gdb-multiarch",
+            "configFiles": [
+                "board/ti_ek-tm4c1294xl.cfg"
+            ],
+            "openOCDLaunchCommands": [
+                "init",
+                "reset halt",
+                "$_TARGETNAME configure -rtos FreeRTOS"
+            ],
+            "showDevDebugOutput": "raw"
+        },
+        {
+            "name": "OpenOCD Attach",
+            "cwd": "${workspaceFolder}",
+            "type": "cortex-debug",
+            "request": "attach",
+            "executable": "${command:cmake.launchTargetPath}",
+            "servertype": "openocd",
+            "device": "TM4C1294NCPDT",
+            "runToEntryPoint": "main",
+            //"svdFile": "",          
+            "gdbPath": "gdb-multiarch",
+            "configFiles": [
+                "board/ti_ek-tm4c1294xl.cfg"
+            ],
+            "openOCDLaunchCommands": [
+                "$_TARGETNAME configure -rtos FreeRTOS"
+            ],
+            "showDevDebugOutput": "raw"
+        }
+    ]
+}

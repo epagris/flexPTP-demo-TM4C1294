@@ -1,0 +1,12 @@
+[submodule "Drivers/tivaware"]
+	path = Drivers/tivaware
+	url = https://github.com/antoinealb/Tivaware.git
+[submodule "Modules/embfmt"]
+	path = Modules/embfmt
+	url = git@epagris.com:epagris/embfmt.git
+[submodule "Modules/flexptp"]
+	path = Modules/flexptp
+	url = git@epagris.com:epagris/flexPTP.git
+[submodule "Modules/lwip"]
+	path = Modules/lwip
+	url = https://github.com/lwip-tcpip/lwip.git
