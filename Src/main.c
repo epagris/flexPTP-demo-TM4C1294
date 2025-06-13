@@ -7,6 +7,7 @@
 #include "cmsis_os2.h"
 #include "flexptp/event.h"
 #include "flexptp/logging.h"
+#include "flexptp/profiles.h"
 #include "flexptp/ptp_profile_presets.h"
 #include "flexptp/settings_interface.h"
 #include "task.h"
@@ -70,6 +71,7 @@ void flexptp_user_event_cb(PtpUserEventCode uev) {
     switch (uev) {
         case PTP_UEV_INIT_DONE:
             ptp_load_profile(ptp_profile_preset_get(FLEXPTP_INITIAL_PROFILE));
+            ptp_print_profile();
             ptp_log_enable(PTP_LOG_DEF, true);
             ptp_log_enable(PTP_LOG_BMCA, true);
             break;

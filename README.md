@@ -1,174 +1,183 @@
-# flexPTP
-## Flexible, low-resource IEEE1588 PTP slave-only implementation designed for MCU-based systems [implemented on TI TM4C1294 Connected LaunchPad]
+# EK-TM4C1294XL Connected LaunchPad flexPTP demo
 
-### Prerequests
+![flexPTP CLI](TIVA.gif)
 
-In order to compile the CCS project found in this repository the following tools are required:
+## What's this?
 
-- TI Code Composer Studio 9.3.0.00012 or higher,
-- TI TivaWare peripheral library (this package can be aquired through CCS),
-- Some modification of vendor provided drivers and files (see below).
+> **This is a [flexPTP](https://github.com/epagris/flexPTP) demo project showcasing the capabilities of the flexPTP [IEEE 1588 Precision Time Protocol](https://ieeexplore.ieee.org/document/9120376) implementation for the [Texas Instruments EK-TM4C1294XL Connected LaunchPad](https://www.ti.com/tool/EK-TM4C1294XL) devboard.**
 
-To run the project you will need:
+Still not clear what is it useful for? No worries, it's a behind-the-scenes support technology that use unaware every day if you have a smartphone or when you are connected to the internet. Modern telecommunication and measurement systems often rely on precise time synchronization down to the nanoseconds' scale. Methods got standardized by the IEEE and now it's known by the name of the Precision Time Protocol. This software project is an evaluation environment to showcase the capabilities of our IEEE 1588 PTP implementation named `flexPTP` on the Texas Instruments EK-TM4C1294XL Connected LaunchPad board.
 
-- a TI Connected LaunchPad,
-- a network featuring a master clock.
+> [!TIP]
+>**Just want to try the demo and skip compiling? Download one of the precompiled binaries and jump to [Deploying](#Deploying)!**
 
-### Binary image
 
-If you don't want to compile the project for yourself, a precompiled binary can be downloaded from here. This binary image can be flashed easily using CCS. 
+### Get the sources
 
-### Serial console
+> [!NOTE]
+> To acquire the full source tree after cloning the repo, please fetch the linked *submodules* as well:
 
-The project is equipped with a moderately interactive command line interface accessible through the virtual serial port (e.g. `/dev/ttyACMx` on Linux) emulated by the development board. Serial port configuration: `115200-8-N-1`. 
+```
+git clone https://gitea.epagris.com/epagris/flexPTP-demo-TM4C1294.git
+cd flexPTP-demo-TM4C1294
+git submodule init
+git submodule update
+```
 
-After the device and software has come up, type `?` to print help, a list of terminal commands. Some commands will only be available if the Ethernet network is connected.
+## Building
 
-Sample command list:
+### Prerequisites
 
-<code>
+The following two pieces of software are necessary for building:
+- `arm-none-eabi-gcc` (v12+): the GCC ARM Cortex-M C cross-compiler
+- `cmake` (v3.22+): KitWare's build management system
 
-    ? 	 Print this help
-    ptp servo params [Kp Kd] 			Set or query K_p and K_d servo parameters
-    ptp reset 			Reset PTP subsystem
-    ptp servo offset [offset_ns] 			Set or query clock offset
-    ptp log {def|corr} {on|off} 			Turn on or off logging
+> [!NOTE]
+> Both applications are available on common Linux systems through the official package repository. Although it's a Texas Instruments product, for building on Windows we recommend to install the STMicroelectronics [STM32CubeCLT](https://www.st.com/en/development-tools/stm32cubeclt.html) bundle shipping the `arm-none-eabi-{gcc|gdb}`, `openocd`. The [CMake](https://cmake.org/) needs to be installed separately.
 
-</code>
+### Compiling
 
+The project is fully CMake managed. Configure and invoke the cross-compiler using the commands below:
 
-### Usage
+```
+cmake . -B build
+cmake --build build --target flexptp-tiva --
+```
+Once the building has concluded the output binaries would be deposited in the `build` directory: `flexptp-tiva.elf`, `flexptp-tiva.bin`, `flexptp-tiva.hex`
 
-To try it out, just connect the Connected LaunchPad to a live Ethernet network being connected to a master clock. After the node has established connection to the network logs and servo settings are acessible through CLI. 1PPS output is accessible on pin PG0.
+## Deploying
 
-### Project modules
+### Downloading the firmware
 
-The project is buit up from multiple modules, the following are designed to be easy to replace or modify:
+The compiled binaries can be downloaded onto the devboard through several tools:
 
-- servo: implementing the clock servo
-- hw_port: containing setup functions for specific timestamp hardware
+### Using the `lm4flash` utility
 
-Instructions on how to replace the current modules can be found in `ptp.h`.
+This tool is part of the open source [lm4flash](https://github.com/utzig/lm4tools) bundle, that is also available through common Linux package managers.
 
-### Network driver modifications 
+To program the MCU use the following command: `lm4flash build/flexptp-tiva.bin`
 
-Original netif driver (located in `third_party/lwip-1.4.1/ports/netif/tiva-tm4c129.c`)
-has been modified so that trasmitted packets being timestamped and timestamps being written back into pbufs.
+### Using the `openocd` application
 
-Enabling TX timestamping in `tivaif_transmit(...)`
+The [OpenOCD](https://openocd.org/) programming/debugging tool can also be used to upload the firmware using the following command:
 
-<code>
+`openocd -f "board/ti_ek-tm4c1294xl.cfg" -c init -c halt -c "program build/flexptp-tiva.elf" -c exit`
 
-    ...
+OpenOCD is also available through the common Linux package managers.
 
-    pDesc->Desc.ui32CtrlStatus |= (DES0_TX_CTRL_IP_ALL_CKHSUMS | DES0_TX_CTRL_CHAINED);
-      
-<b>
+### Interacting with the firmware
 
-    #if LWIP_PTPD
-      pDesc->Desc.ui32CtrlStatus |= (1 << 25); // set TTSS flag
-    #endif
+The firmware prints its messages to and expect user input coming on the board controller's virtual serial port using the `115200-8-N-1` configuration. Use [Putty](https://www.putty.org/) or any equivalent (e.g. GtkTerm) serial port terminal to communicate with the firmware. On Linux, the device will show up as `/dev/ttyACMx`.
 
-</b>
+> [!NOTE]
+> Read the firmware's bootup hints and messages carefully!
 
-    /* Decrement our descriptor counter, move on to the next buffer in the
-    * pbuf chain. */
-    ui32NumChained--;
-    pBuf = pBuf->next;
+### PPS signal
 
-    ...
-</code>
+The 1PPS signal is emitted on the `PG0` pin.
 
-Enabling timestamp writeback in `tivaif_process_transmit(...)`
+## Development
 
-<code>
+An all-around [Visual Studio Code](https://code.visualstudio.com/) project is packaged along the project to enable easy development, debugging and editing. To enable these powerful features, [CMakeTools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cmake-tools), [Cortex-Debug](https://marketplace.visualstudio.com/items?itemName=marus25.cortex-debug), [Embedded Tools](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-embedded-tools) extensions and the [OpenOCD](https://openocd.org/) software package. [clangd](https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-extensions.vscode-clangd) and clang-format are highly recommended.
 
-    ...
+Thas project has predefined *Launch* and *Attach* tasks.
 
-    tDescriptorList *pDescList;
-    uint32_t ui32NumDescs;
+### Software structure
 
-<b>    
+The project is relying on the following large software building blocks:
+- the [FreeRTOS](https://www.freertos.org/) embedded operating system,
+- the [CMSIS RTOS V2](https://arm-software.github.io/CMSIS_6/latest/RTOS2/index.html) module as a wrapper for FreeRTOS,
+- the [TivaWare](https://github.com/antoinealb/Tivaware) peripheral library,
+- the [Lightweight IP](https://github.com/lwip-tcpip/lwip) (lwip) Ethernet stack extended with PTP timestamp support,
+- the [embfmt](https://gitea.epagris.com/epagris/embfmt) a printf()-like formatted printer implementation for embedded systems.
 
-    #if LWIP_PTPD
-        struct pbuf * pPBuf;
-        struct tEMACDMADescriptor * pDesc;
-    #endif
+The project is organized the following way:
 
-</b>
+```
+ROOT
+  Drivers
+    CMSIS: ARM CMSIS-related files (CMSIS RTOS V2 and device headers)
+    tivaware: TI's peripheral library (submodule)
+  Inc: headers for compile-time library configuration
+  Middlewares: FreeRTOS CMake configuration
+  Modules
+    flexptp: our PTP implementation (submodule)
+    lwip: the LwIP Ethernet stack (submodule)
+    lwip_port: network interface and system specific implementations
+    embfmt: a printf()-like formatted printer implementation for embedded systems (submodule)
+  Src
+    utils: TI-provided utilities
+    task_eth.c: Ethernet stack management
 
-    ...
+    cli.c/h: CLI-interface implementation
+    cmds.c: custom CLI commands
+```
+> [!NOTE]
+> The flexPTP parameters are defined in the [flexptp_options.h](Inc/flexptp_options.h) header.
 
-</code>
+> [!NOTE]
+> The low-level Ethernet network driver is located in the [tiva-tm4c129.c](Modules/lwip_port/tiva-tm4c129/netif/tiva-tm4c129.c) file.
 
+### Printing and logging
 
-<code>            
+In this project the memory-heavy `printf()` is replaced by the more embedded-optimized `MSG()` function backed by the `embfmt` library. Parameters and format specifiers are fully `printf()` compatible.
 
-    /* Yes - free it if it's not marked as an intermediate pbuf */
-            if(!((uint32_t)(pDescList->pDescriptors[pDescList->ui32Read].pBuf) & 1))
-            {
-                pbuf_free(pDescList->pDescriptors[pDescList->ui32Read].pBuf);
-                DRIVER_STATS_INC(TXBufFreedCount);
-            }
+### CLI commands
 
+The software offers you with the following multitude, most flexPTP-related of commands:
 
-<b>
+```
+?                                                  Print this help (22/48)
+hist                                               Print command history
+osinfo                                             Print OS-related information
+flexptp                                            Start flexPTP daemon
+ptp servo params [Kp Kd]                           Set or query K_p and K_d servo parameters
+ptp servo log internals {on|off}                   Enable or disable logging of servo internals
+ptp reset                                          Reset PTP subsystem
+ptp servo offset [offset_ns]                       Set or query clock offset
+ptp log {def|corr|ts|info|locked|bmca} {on|off}    Turn on or off logging
+time [ns]                                          Print time
+ptp master [[un]prefer] [clockid]                  Master clock settings
+ptp info                                           Print PTP info
+ptp domain [domain]                                Print or get PTP domain
+ptp addend [addend]                                Print or set addend
+ptp transport [{ipv4|802.3}]                       Set or get PTP transport layer
+ptp delmech [{e2e|p2p}]                            Set or get PTP delay mechanism
+ptp transpec [{def|gPTP}]                          Set or get PTP transportSpecific field (majorSdoId)
+ptp profile [preset [<name>]]                      Print or set PTP profile, or list available presets
+ptp tlv [preset [name]|unload]                     Print or set TLV-chain, or list available TLV presets
+ptp pflags [<flags>]                               Print or set profile flags
+ptp period <delreq|sync|ann> [<lp>|matched]        Print or set log. periods
+ptp coarse [threshold]                             Print or set coarse correction threshold
+ptp priority [<p1> <p2>]                           Print or set clock priority fields
+```
 
-    #if LWIP_PTPD
-            pPBuf = pDescList->pDescriptors[pDescList->ui32Read].pBuf;
-            pDesc = &pDescList->pDescriptors[pDescList->ui32Read].Desc;
-            
-            // Write timestamp back
-            pPBuf->time_s = pDesc->ui32IEEE1588TimeHi;
-            pPBuf->time_ns = pDesc->ui32IEEE1588TimeLo;
-    #endif
+> [!TIP]
+> The above hint can be listed by typing '?'.
 
-</b>
+## Notes
 
-            pDescList->pDescriptors[pDescList->ui32Read].pBuf = NULL;
+> [!WARNING]
+> By default, the MCU clock is sourced by the onboard (STLink) board controller on this devboard. According to our observations, this clock signal is loaded with heavy noise rendering the clock synchronization unable to settle precisely. We highly recommend to solder a 8 MHz oscillator onto  the designated X3 pads to achieve the best results!
 
-            ...
-            
-</code>
 
-Another modification has been made to enbale multicast message transmission and 
-reception:
+## Related papers and references
 
-(line 328:)
+[Time Synchronization Extension for the IO-Link Industrial Communication Protocol](https://ieeexplore.ieee.org/document/10747727)
 
-<code>
+[Distributed Measurement System for Performance Evaluation of Embedded Clock Synchronization Solutions](https://ieeexplore.ieee.org/document/9805958/)
 
-    psNetif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP <b>| NETIF_FLAG_IGMP</b>;
+[Portable, PTP-based Clock Synchronization Implementation for Microcontroller-based Systems and its Performance Evaluation](https://ieeexplore.ieee.org/document/9615250)
 
-</code>
+[Synchronization of Sampling in a Distributed Audio Frequency Range Data Acquisition System Utilizing Microcontrollers](https://ieeexplore.ieee.org/document/9918455/)
 
-### UARTprintf modification
+[Methods of Peripheral Synchronization in Real-Time Cyber-Physical Systems](https://ieeexplore.ieee.org/document/10178979/)
 
-To enable task switching while waiting for new data to arrive on serial port, insert some (OS managed) delay into `UARTgets(...)` in `uartstdio.c`
 
-<code>            
 
-    ...
+## License
 
-    //
-    // Process characters until a newline is received.
-    //
-    while(1)
-    {
-        //
-        // Read the next character from the receive buffer.
-        //
+The project is created by András Wiesner (Epagris) in 2025 and published under the MIT license. Contributions are welcome! :)
 
 
-<b>
 
-        vTaskDelay(pdMS_TO_TICKS(10));
-
-</b>
-
-        if(!RX_BUFFER_EMPTY)
-        {
-    
-    ...
-            
-</code>

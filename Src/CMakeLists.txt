@@ -3,9 +3,6 @@ target_sources(
     PUBLIC
     
     main.c
-    
-    flexptp_options.h
-    lwipopts.h
 
     cli.c
     cli.h
