@@ -41,6 +41,7 @@
 /* lwIP includes. */
 #include "lwip/opt.h"
 #include "lwip/sys.h"
+#include "lwip/mem.h"
 
 #if NO_SYS
 
@@ -383,6 +384,31 @@ sys_mbox_trypost(sys_mbox_t *mbox, void *msg)
 {
   /* Send this message to the queue. */
   if(xQueueSend(mbox->queue, &msg, 0) == pdPASS) {
+    return ERR_OK;
+  }
+
+  /* Update the mailbox statistics. */
+#if SYS_STATS
+  STATS_INC(sys.mbox.err);
+#endif /* SYS_STATS */
+
+  /* The message could not be sent. */
+  return ERR_MEM;
+}
+
+/**
+ * Tries to send a message to a mailbox.
+ *
+ * @param mbox is the mailbox
+ * @param msg is the message to send
+ * @return ERR_OK if the message was sent and ERR_MEM if there was no space for
+ *         the message
+ */
+err_t
+sys_mbox_trypost_fromisr(sys_mbox_t *mbox, void *msg)
+{
+  /* Send this message to the queue. */
+  if(xQueueSendFromISR(mbox->queue, &msg, 0) == pdPASS) {
     return ERR_OK;
   }
 

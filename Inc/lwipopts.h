@@ -35,6 +35,7 @@
 #define __LWIPOPTS_H__
 
 #include <cmsis_os2.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 /**
@@ -103,6 +104,9 @@ a lot of data that needs to be copied, this should be set high. */
 
 
 /* --------- Ethernet hooks --------- */
+struct netif;
+struct pbuf;
+extern int8_t hook_unknown_ethertype(struct pbuf *pbuf, struct netif *netif);
 #define LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(pbuf,netif) hook_unknown_ethertype(pbuf,netif)
 
 /* ---------- IPv4 options ---------- */

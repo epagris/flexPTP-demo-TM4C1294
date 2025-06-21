@@ -1,8 +1,6 @@
 #ifndef FLEXPTP_OPTIONS_CH32F207_H_
 #define FLEXPTP_OPTIONS_CH32F207_H_
 
-#define ETHLIB
-
 // -------------------------------------------
 // ------ DEFINES FOR FLEXPTP SETTINGS -------
 // -------------------------------------------
@@ -24,6 +22,7 @@
 
 #include "cli.h"
 #include "utils.h"
+#include "embfmt/embformat.h"
 
 #define FLEXPTP_SNPRINTF(...) embfmt(__VA_ARGS__)
 
@@ -40,6 +39,8 @@
 #include <stdlib.h>
 #include "inc/hw_memmap.h"
 #include "driverlib/emac.h"
+
+#include "flexptp/port/example_ports/ptp_port_tiva_tm4c1294.h"
 
 #define PTP_HW_INIT(increment, addend) ptphw_init(increment, addend)
 #define PTP_UPDATE_CLOCK(s,ns) EMACTimestampSysTimeUpdate(EMAC0_BASE, labs(s), abs(ns), (s * NANO_PREFIX + ns) < 0)
