@@ -55,4 +55,5 @@ set(FLEXPTP_CPU_PARAMS ${cpu_PARAMS})
 set(FLEXPTP_COMPILE_DEFS ${symbols_c_SYMB})
 add_subdirectory(flexptp)
 target_link_libraries(${CMAKE_PROJECT_NAME} flexptp)
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC ${FLEXPTP_INCLUDE_EXPORT})
 
