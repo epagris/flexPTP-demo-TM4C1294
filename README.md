@@ -18,7 +18,7 @@ Still not clear what is it useful for? No worries, it's a behind-the-scenes supp
 > To acquire the full source tree after cloning the repo, please fetch the linked *submodules* as well:
 
 ```
-git clone https://gitea.epagris.com/epagris/flexPTP-demo-TM4C1294.git
+git clone https://github.com/epagris/flexPTP-demo-TM4C1294/
 cd flexPTP-demo-TM4C1294
 git submodule init
 git submodule update
