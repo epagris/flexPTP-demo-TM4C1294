@@ -155,12 +155,6 @@ ptp priority [<p1> <p2>]                           Print or set clock priority f
 > [!TIP]
 > The above hint can be listed by typing '?'.
 
-## Notes
-
-> [!WARNING]
-> By default, the MCU clock is sourced by the onboard (STLink) board controller on this devboard. According to our observations, this clock signal is loaded with heavy noise rendering the clock synchronization unable to settle precisely. We highly recommend to solder a 8 MHz oscillator onto  the designated X3 pads to achieve the best results!
-
-
 ## Related papers and references
 
 [Time Synchronization Extension for the IO-Link Industrial Communication Protocol](https://ieeexplore.ieee.org/document/10747727)
