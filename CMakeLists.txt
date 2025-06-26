@@ -56,9 +56,15 @@ set(cpu_PARAMS ${cpu_PARAMS}
 )
 
 # Linker script
-set(linker_script_SRC ${linker_script_SRC}
-    ${CMAKE_CURRENT_SOURCE_DIR}/tm4c1294ncpdt.ld
-)
+if (CMAKE_C_COMPILER_VERSION VERSION_GREATER 11.0)
+    set(linker_script_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/tm4c1294ncpdt_GCC11.ld
+    )
+else()
+    set(linker_script_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/tm4c1294ncpdt_GCC10.ld
+    )
+endif()
 
 # Sources
 set(sources_SRCS ${sources_SRCS}
